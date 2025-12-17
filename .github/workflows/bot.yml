@@ -33,10 +33,14 @@ jobs:
 
       - name: Install VC++ Redistributables
         run: |
-          # Visual C++ 2013
+          # Start Xvfb in background
+          Xvfb :99 -screen 0 1024x768x24 &
+          export DISPLAY=:99
+      
+          # Install VC++ runtimes
           winetricks -q vcrun2013
-          # Visual C++ 2015-2022
           winetricks -q vcrun2019
+
 
       - name: Run Windows CLI bot headless
         run: |
