@@ -1,11 +1,11 @@
-name: Minimal Runner
+name: Minimal Runner (Linux Wine + Xvfb)
 
 on:
   workflow_dispatch:
 
 jobs:
   run:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 360
 
     # 🔐 ONLY IP + PORT
@@ -19,38 +19,33 @@ jobs:
 
       - name: Validate environment (safe)
         run: |
-          if (-not $env:SERVER_IP -or -not $env:SERVER_PORT) {
-              Write-Error "❌ SERVER_IP or SERVER_PORT missing"
-              exit 1
-          }
-          Write-Host "✅ Server config loaded"
-          
-      - name: Install VC++ Redistributables (2013 + 2015-2022)
+          if [ -z "$SERVER_IP" ] || [ -z "$SERVER_PORT" ]; then
+            echo "❌ SERVER_IP or SERVER_PORT missing"
+            exit 1
+          fi
+          echo "✅ Server config loaded"
+
+      - name: Install Wine, Xvfb, Winetricks
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y wine64 wine32 xvfb winetricks
+
+      - name: Install VC++ Redistributables
         run: |
           # Visual C++ 2013
-          choco install vcredist2013 -y
-      
-          # Visual C++ 2015‑2022 (vcredist140)
-          choco install vcredist140 -y
-      
-      - name: Run Windows CLI bot with debug
+          winetricks -q vcrun2013
+          # Visual C++ 2015-2022
+          winetricks -q vcrun2019
+
+      - name: Run Windows CLI bot headless
         run: |
-          $address = "$($env:SERVER_IP):$($env:SERVER_PORT)"
-          $cmd = ".\bot.exe --host --address $address --login AFKBOT"
-      
-          Write-Host "Running bot.exe (masked address in logs)"
-          
-          $process = Start-Process -FilePath ".\bot.exe" `
-                                   -ArgumentList "--host","--address",$address,"--login","AFKBOT" `
-                                   -NoNewWindow -PassThru -Wait `
-                                   -RedirectStandardOutput "stdout.txt" `
-                                   -RedirectStandardError "stderr.txt"
-      
-          Write-Host "Exit code: $($process.ExitCode)"
-          Write-Host "Standard Output:"
-          Get-Content stdout.txt
-          Write-Host "Standard Error:"
-          Get-Content stderr.txt
+          export DISPLAY=:99
+          # Start virtual display in background
+          Xvfb :99 -screen 0 1024x768x24 &
 
+          # Set server address
+          BOT_ADDRESS="$SERVER_IP:$SERVER_PORT"
 
-
+          # Run the bot
+          wine ./bot.exe --host --address "$BOT_ADDRESS" --login "AFKBOT"
