@@ -24,10 +24,14 @@ jobs:
               exit 1
           }
           Write-Host "✅ Server config loaded"
+          
+      - name: Install VC++ Redistributables
+        run: |
+          choco install vcredist-all -y
 
       - name: Run Windows CLI bot (debug full command)
         run: |
-          $cmd = ".\bot.exe --host --address $env:SERVER_IP:$env:SERVER_PORT --login AFKBOT"
-          Write-Host "Full command: $cmd"
+          $cmd = ".\bot.exe --host --address $($env:SERVER_IP):$($env:SERVER_PORT) --login AFKBOT"
           Invoke-Expression $cmd
+
 
