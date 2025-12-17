@@ -25,7 +25,9 @@ jobs:
           }
           Write-Host "✅ Server config loaded"
 
-      - name: Run Windows CLI bot
+      - name: Run Windows CLI bot (debug full command)
         run: |
-          Write-Host "Starting bot.exe"
-          .\bot.exe --host --address "$env:SERVER_IP:$env:SERVER_PORT" --login "AFKBOT"
+          $cmd = ".\bot.exe --host --address $env:SERVER_IP:$env:SERVER_PORT --login AFKBOT"
+          Write-Host "Full command: $cmd"
+          Invoke-Expression $cmd
+
