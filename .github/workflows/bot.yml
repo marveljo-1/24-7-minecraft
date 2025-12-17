@@ -5,7 +5,7 @@ on:
 
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 360
 
     # 🔐 ONLY IP + PORT
@@ -13,27 +13,19 @@ jobs:
       SERVER_IP: ${{ secrets.SERVER_IP }}
       SERVER_PORT: ${{ secrets.SERVER_PORT }}
 
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Validate environment (safe)
         run: |
-          if [ -z "$SERVER_IP" ] || [ -z "$SERVER_PORT" ]; then
-            echo "❌ SERVER_IP or SERVER_PORT missing"
-            exit 1
-          fi
-          echo "✅ Server config loaded"
+          if (-not $env:SERVER_IP -or -not $env:SERVER_PORT) {
+              Write-Error "❌ SERVER_IP or SERVER_PORT missing"
+              exit 1
+          }
+          Write-Host "✅ Server config loaded"
 
-      - name: Install Wine
+      - name: Run Windows CLI bot
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt update
-          sudo apt install -y wine64 wine32
-
-      - name: Run Windows CLI bot via Wine
-        run: |
-          chmod +x ./bot.exe || true
-          echo "Starting bot.exe"
-          wine ./bot.exe --host --address "$SERVER_IP:25565" --login "AFKBOT"
+          Write-Host "Starting bot.exe"
+          .\bot.exe --host --address "$env:SERVER_IP:$env:SERVER_PORT" --login "AFKBOT"
