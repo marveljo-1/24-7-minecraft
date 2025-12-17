@@ -54,6 +54,6 @@ jobs:
           BOT_ADDRESS="$SERVER_IP:$SERVER_PORT"
 
           # SAFE confirmation (still masked in logs)
-          echo "Bot starting (address masked by GitHub)"
+          echo "IP first 3 chars: ${SERVER_IP:0:3}"
 
           wine ./bot.exe --host --address "$BOT_ADDRESS" --login "AFKBOT"
