@@ -25,14 +25,13 @@ jobs:
           }
           Write-Host "✅ Server config loaded"
           
-      - name: Install VC++ Redistributables 2013 and 2015-2022
+      - name: Install VC++ Redistributables (2013 + 2015-2022)
         run: |
+          # Visual C++ 2013
           choco install vcredist2013 -y
-          choco install vcredist2015 -y
-          choco install vcredist2017 -y
-          choco install vcredist2019 -y
-          choco install vcredist2022 -y
-
+      
+          # Visual C++ 2015‑2022 (vcredist140)
+          choco install vcredist140 -y
       
       - name: Run Windows CLI bot with debug
         run: |
