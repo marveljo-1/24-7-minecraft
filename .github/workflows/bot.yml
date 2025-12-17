@@ -28,10 +28,25 @@ jobs:
       - name: Install VC++ Redistributables
         run: |
           choco install vcredist-all -y
-
-      - name: Run Windows CLI bot (debug full command)
+      
+      - name: Run Windows CLI bot with debug
         run: |
-          $cmd = ".\bot.exe --host --address $($env:SERVER_IP):$($env:SERVER_PORT) --login AFKBOT"
-          Invoke-Expression $cmd
+          $address = "$($env:SERVER_IP):$($env:SERVER_PORT)"
+          $cmd = ".\bot.exe --host --address $address --login AFKBOT"
+      
+          Write-Host "Running bot.exe (masked address in logs)"
+          
+          $process = Start-Process -FilePath ".\bot.exe" `
+                                   -ArgumentList "--host","--address",$address,"--login","AFKBOT" `
+                                   -NoNewWindow -PassThru -Wait `
+                                   -RedirectStandardOutput "stdout.txt" `
+                                   -RedirectStandardError "stderr.txt"
+      
+          Write-Host "Exit code: $($process.ExitCode)"
+          Write-Host "Standard Output:"
+          Get-Content stdout.txt
+          Write-Host "Standard Error:"
+          Get-Content stderr.txt
+
 
 
