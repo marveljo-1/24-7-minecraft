@@ -1,59 +1,49 @@
-name: Minimal Runner (Linux Wine + Xvfb)
+name: Renew Pterodactyl Server
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # allows manual triggering
 
 jobs:
-  run:
+  renew:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
-
-    env:
-      SERVER_IP: ${{ secrets.SERVER_IP }}
-      SERVER_PORT: ${{ secrets.SERVER_PORT }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # Checkout the repository
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - name: Validate environment (safe)
+      # Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Install dependencies
+      - name: Install dependencies
         run: |
-          if [ -z "$SERVER_IP" ] || [ -z "$SERVER_PORT" ]; then
-            echo "❌ SERVER_IP or SERVER_PORT missing"
-            exit 1
-          fi
+          python -m pip install --upgrade pip
+          pip install playwright asyncio
 
-          # ✅ SAFE PRINT (first IP word only)
-          echo "IP first word: ${SERVER_IP%%.*}"
-          echo "Port loaded"
-
-          echo "✅ Server config loaded"
-
-      - name: Install Wine, Xvfb, Winetricks
+      # Install browsers for Playwright
+      - name: Install Playwright browsers
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt update
-          sudo apt install -y wine64 wine32 xvfb winetricks
+          playwright install chromium
 
-      - name: Setup Xvfb + VC++ runtimes
+      # Restore cached pterodactyl_session cookie
+      - name: Restore cookie cache
+        uses: actions/cache@v3
+        with:
+          path: ptero_cookies.json
+          key: pterodactyl-session
+
+      # Run the renewal script
+      - name: Run Playwright script
         run: |
-          export DISPLAY=:99
-          Xvfb :99 -screen 0 1024x768x24 &
+          python main.py
 
-          # Give Xvfb time to start
-          sleep 3
-
-          # VC++ runtimes
-          winetricks -q vcrun2013
-          winetricks -q vcrun2019
-
-      - name: Run Windows CLI bot headless
-        run: |
-          export DISPLAY=:99
-
-          BOT_ADDRESS="$SERVER_IP:$SERVER_PORT"
-
-          # SAFE confirmation (still masked in logs)
-          echo "IP first 3 chars: ${SERVER_IP:0:3}"
-
-          wine ./bot.exe --host --address "$BOT_ADDRESS" --login "AFKBOT"
+      # Save the updated cookie to cache
+      - name: Save cookie cache
+        uses: actions/cache@v3
+        with:
+          path: ptero_cookies.json
+          key: pterodactyl-session
