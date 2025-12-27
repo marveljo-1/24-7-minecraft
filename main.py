@@ -1,5 +1,6 @@
 import asyncio
 import time
+from datetime import datetime, timedelta
 from playwright.async_api import async_playwright
 import json
 from pathlib import Path
@@ -64,6 +65,12 @@ async def run():
         # Extract only the pterodactyl_session cookie
         cookies = await context.cookies()
         ptero_cookie = next((c for c in cookies if c["name"] == "pterodactyl_session"), None)
+        expiation = ptero_cookie.get("expires", 0)
+        # add 2 hour to expiration time to cookie data
+        if expiation:
+            expiation_dt = datetime.fromtimestamp(expiation)
+            new_expiation_dt = expiation_dt + timedelta(hours=2, minutes=30)
+            ptero_cookie["expires"] = int(new_expiation_dt.timestamp())
         if ptero_cookie:
             with COOKIE_FILE.open("w") as f:
                 json.dump(ptero_cookie, f)
