@@ -1,47 +1,51 @@
 name: Renew Pterodactyl Server
 
 on:
-  workflow_dispatch:  # allows manual triggering
+  workflow_dispatch:
 
 jobs:
   renew:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-      # Checkout the repository
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install playwright asyncio
 
-      # Install browsers for Playwright
+      # 🔹 Cache Playwright browsers
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: C:\Users\runneradmin\AppData\Local\ms-playwright
+          key: playwright-${{ runner.os }}-chromium
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      # 🔹 Install browser (will be skipped if cached)
       - name: Install Playwright browsers
         run: |
           playwright install chromium
 
-      # Restore cached pterodactyl_session cookie
+      # Cookie cache
       - name: Restore cookie cache
         uses: actions/cache@v3
         with:
           path: ptero_cookies.json
           key: pterodactyl-session
 
-      # Run the renewal script
       - name: Run Playwright script
         run: |
           python main.py
 
-      # Save the updated cookie to cache
       - name: Save cookie cache
         uses: actions/cache@v3
         with:
